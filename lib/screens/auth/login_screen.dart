@@ -111,12 +111,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                       setState(() => _submitting = true);
 
                                       final auth = context.read<AuthProvider>();
-                                      final err = auth.login(
+                                      final err = await auth.login(
                                         email: emailCtrl.text,
                                         password: passCtrl.text,
                                       );
 
-                                      if (!mounted) return;
+                                      if (!context.mounted) return;
                                       setState(() => _submitting = false);
 
                                       if (err != null) {

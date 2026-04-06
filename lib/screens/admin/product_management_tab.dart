@@ -71,6 +71,7 @@ class ProductManagementTab extends StatelessWidget {
 
     showDialog(
       context: context,
+      useRootNavigator: true,
       builder: (_) => AlertDialog(
         title: Text(old == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm'),
         content: StatefulBuilder(

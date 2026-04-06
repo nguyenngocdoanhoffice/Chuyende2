@@ -1,13 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/cart_item.dart';
 import '../models/product.dart';
+import '../services/app_database.dart';
 
 /// Manages cart items and coupon logic.
 class CartProvider with ChangeNotifier {
   final Map<String, CartItem> _items = {};
   double _discountPercent = 0.0;
+  String? _currentUserId;
+  int _bindToken = 0;
 
   List<CartItem> get items => _items.values.toList();
 
@@ -19,6 +24,26 @@ class CartProvider with ChangeNotifier {
   double get total => subtotal * (1 - _discountPercent / 100);
 
   double get discountPercent => _discountPercent;
+
+  Future<void> bindUser(String? userId) async {
+    final token = ++_bindToken;
+    _currentUserId = userId;
+
+    _items.clear();
+    _discountPercent = 0.0;
+    notifyListeners();
+
+    if (userId == null || userId.isEmpty) return;
+
+    final persisted = await AppDatabase.instance.getCartByUser(userId);
+    if (token != _bindToken) return;
+
+    _items
+      ..clear()
+      ..addEntries(persisted.items.map((item) => MapEntry(item.id, item)));
+    _discountPercent = persisted.discountPercent.clamp(0, 100).toDouble();
+    notifyListeners();
+  }
 
   void addItem(
     Product product, {
@@ -35,6 +60,7 @@ class CartProvider with ChangeNotifier {
       storage: storage,
       quantity: quantity,
     );
+    _persistCurrentCart();
     notifyListeners();
   }
 
@@ -42,23 +68,27 @@ class CartProvider with ChangeNotifier {
     if (!_items.containsKey(cartItemId)) return;
     _items[cartItemId]!.quantity = qty;
     if (qty <= 0) _items.remove(cartItemId);
+    _persistCurrentCart();
     notifyListeners();
   }
 
   void remove(String cartItemId) {
     _items.remove(cartItemId);
+    _persistCurrentCart();
     notifyListeners();
   }
 
   void clear() {
     _items.clear();
     _discountPercent = 0.0;
+    _persistCurrentCart();
     notifyListeners();
   }
 
   /// This is used by coupon management screens to apply a global discount.
   void setDiscountPercent(double value) {
     _discountPercent = value.clamp(0, 100).toDouble();
+    _persistCurrentCart();
     notifyListeners();
   }
 
@@ -71,5 +101,30 @@ class CartProvider with ChangeNotifier {
       return true;
     }
     return false;
+  }
+
+  void _persistCurrentCart() {
+    final userId = _currentUserId;
+    if (userId == null || userId.isEmpty) return;
+
+    final snapshot = _items.values
+        .map(
+          (item) => CartItem(
+            id: item.id,
+            product: item.product,
+            ram: item.ram,
+            storage: item.storage,
+            quantity: item.quantity,
+          ),
+        )
+        .toList();
+
+    unawaited(
+      AppDatabase.instance.saveCartByUser(
+        userId: userId,
+        items: snapshot,
+        discountPercent: _discountPercent,
+      ),
+    );
   }
 }

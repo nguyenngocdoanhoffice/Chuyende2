@@ -9,9 +9,11 @@ import '../services/app_database.dart';
 class OrderProvider with ChangeNotifier {
   final List<Order> _orders = [];
   final List<Coupon> _coupons = [];
+  bool _ready = false;
+  late final Future<void> _bootstrapFuture;
 
   OrderProvider() {
-    _loadInitialData();
+    _bootstrapFuture = _loadInitialData();
   }
 
   Future<void> _loadInitialData() async {
@@ -25,7 +27,13 @@ class OrderProvider with ChangeNotifier {
     _coupons
       ..clear()
       ..addAll(coupons);
+    _ready = true;
     notifyListeners();
+  }
+
+  Future<void> _ensureReady() async {
+    if (_ready) return;
+    await _bootstrapFuture;
   }
 
   List<Order> get orders => List.unmodifiable(_orders);
@@ -48,6 +56,7 @@ class OrderProvider with ChangeNotifier {
     required String code,
     required double percent,
   }) async {
+    await _ensureReady();
     final normalized = code.trim().toUpperCase();
     if (normalized.isEmpty) return;
 
@@ -73,6 +82,7 @@ class OrderProvider with ChangeNotifier {
   }
 
   Future<void> deleteCoupon(String id) async {
+    await _ensureReady();
     _coupons.removeWhere((c) => c.id == id);
     await AppDatabase.instance.deleteCoupon(id);
     notifyListeners();
@@ -88,6 +98,7 @@ class OrderProvider with ChangeNotifier {
     required double total,
     required List<CartItem> cartItems,
   }) async {
+    await _ensureReady();
     // Clone items so order snapshot stays stable after cart changes.
     final snapshot = cartItems
         .map(
@@ -119,6 +130,7 @@ class OrderProvider with ChangeNotifier {
   }
 
   Future<void> updateStatus(String orderId, OrderStatus newStatus) async {
+    await _ensureReady();
     final index = _orders.indexWhere((o) => o.id == orderId);
     if (index == -1) return;
     _orders[index].status = newStatus;

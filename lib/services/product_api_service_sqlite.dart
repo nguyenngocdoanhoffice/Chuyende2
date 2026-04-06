@@ -26,6 +26,7 @@ class ProductApiService {
         version: 1,
         onCreate: _onCreate,
         onOpen: (db) async {
+          await _ensureProductsTable(db);
           await _seedIfNeeded(db);
         },
       );
@@ -41,6 +42,7 @@ class ProductApiService {
           version: 1,
           onCreate: _onCreate,
           onOpen: (db) async {
+            await _ensureProductsTable(db);
             await _seedIfNeeded(db);
           },
         ),
@@ -51,8 +53,14 @@ class ProductApiService {
   }
 
   static Future<void> _onCreate(Database db, int version) async {
+    await _ensureProductsTable(db);
+
+    await _seedIfNeeded(db);
+  }
+
+  static Future<void> _ensureProductsTable(Database db) async {
     await db.execute('''
-      CREATE TABLE products (
+      CREATE TABLE IF NOT EXISTS products (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         category TEXT NOT NULL,
@@ -62,8 +70,6 @@ class ProductApiService {
         on_sale INTEGER NOT NULL DEFAULT 0
       )
     ''');
-
-    await _seedIfNeeded(db);
   }
 
   static Future<void> _seedIfNeeded(Database db) async {

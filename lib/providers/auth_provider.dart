@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -8,13 +10,16 @@ class AuthProvider with ChangeNotifier {
   final List<AppUser> _users = [];
 
   AppUser? _currentUser;
+  bool _ready = false;
+  late final Future<void> _bootstrapFuture;
 
   AuthProvider() {
-    _loadUsers();
+    _bootstrapFuture = _bootstrap();
   }
 
   AppUser? get currentUser => _currentUser;
   bool get isLoggedIn => _currentUser != null;
+  bool get isReady => _ready;
 
   bool get isAdmin => _currentUser?.role == UserRole.admin;
 
@@ -22,7 +27,23 @@ class AuthProvider with ChangeNotifier {
     _users
       ..clear()
       ..addAll(await AppDatabase.instance.getUsers());
+  }
+
+  Future<void> _bootstrap() async {
+    await _loadUsers();
+    final persistedUserId = await AppDatabase.instance.getCurrentUserId();
+    if (persistedUserId != null && persistedUserId.isNotEmpty) {
+      final index = _users.indexWhere((u) => u.id == persistedUserId);
+      if (index >= 0) {
+        _currentUser = _users[index];
+      }
+    }
+    _ready = true;
     notifyListeners();
+  }
+
+  Future<void> _ensureReady() async {
+    await _bootstrapFuture;
   }
 
   Future<String?> register({
@@ -30,6 +51,7 @@ class AuthProvider with ChangeNotifier {
     required String email,
     required String password,
   }) async {
+    await _ensureReady();
     if (name.trim().isEmpty) return 'Tên không được để trống';
     if (!email.contains('@') || email.length < 5) return 'Email không hợp lệ';
     if (password.length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
@@ -51,13 +73,18 @@ class AuthProvider with ChangeNotifier {
     return null;
   }
 
-  String? login({required String email, required String password}) {
+  Future<String?> login({
+    required String email,
+    required String password,
+  }) async {
+    await _ensureReady();
     final normalizedEmail = email.trim().toLowerCase();
 
     for (final user in _users) {
       if (user.email.toLowerCase() == normalizedEmail &&
           user.password == password) {
         _currentUser = user;
+        await AppDatabase.instance.setCurrentUserId(user.id);
         notifyListeners();
         return null;
       }
@@ -67,6 +94,7 @@ class AuthProvider with ChangeNotifier {
 
   void logout() {
     _currentUser = null;
+    unawaited(AppDatabase.instance.setCurrentUserId(null));
     notifyListeners();
   }
 
@@ -76,6 +104,7 @@ class AuthProvider with ChangeNotifier {
     required String phone,
     required String address,
   }) async {
+    await _ensureReady();
     final current = _currentUser;
     if (current == null) return 'Bạn chưa đăng nhập';
 

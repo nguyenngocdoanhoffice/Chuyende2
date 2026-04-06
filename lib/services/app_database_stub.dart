@@ -1,5 +1,7 @@
 import '../models/coupon.dart';
+import '../models/cart_item.dart';
 import '../models/order.dart';
+import '../models/persisted_cart.dart';
 import '../models/product.dart';
 import '../models/user.dart';
 
@@ -12,6 +14,8 @@ class AppDatabase {
   final List<Product> _products = [];
   final List<Coupon> _coupons = [];
   final List<Order> _orders = [];
+  final Map<String, PersistedCart> _cartsByUser = {};
+  String? _currentUserId;
   bool _initialized = false;
 
   Future<void> init() async {
@@ -166,5 +170,38 @@ class AppDatabase {
     if (index >= 0) {
       _orders[index].status = status;
     }
+  }
+
+  Future<String?> getCurrentUserId() async {
+    await init();
+    return _currentUserId;
+  }
+
+  Future<void> setCurrentUserId(String? userId) async {
+    await init();
+    _currentUserId = userId;
+  }
+
+  Future<PersistedCart> getCartByUser(String userId) async {
+    await init();
+    return _cartsByUser[userId] ??
+        const PersistedCart(items: [], discountPercent: 0);
+  }
+
+  Future<void> saveCartByUser({
+    required String userId,
+    required List<CartItem> items,
+    required double discountPercent,
+  }) async {
+    await init();
+    _cartsByUser[userId] = PersistedCart(
+      items: List<CartItem>.from(items),
+      discountPercent: discountPercent,
+    );
+  }
+
+  Future<void> clearCartByUser(String userId) async {
+    await init();
+    _cartsByUser.remove(userId);
   }
 }
