@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../models/product.dart';
@@ -9,24 +12,40 @@ class ProductApiService {
   static Database? _database;
   static bool _initialized = false;
 
+  static bool get _useMobileSqflite =>
+      Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+
   static Future<Database> _db() async {
     if (_database != null) return _database!;
 
-    sqfliteFfiInit();
-    final factory = databaseFactoryFfi;
-    final dbPath = await factory.getDatabasesPath();
-    final path = join(dbPath, 'my_app.db');
-
-    _database = await factory.openDatabase(
-      path,
-      options: OpenDatabaseOptions(
+    if (_useMobileSqflite) {
+      final dbPath = await sqflite.getDatabasesPath();
+      final path = join(dbPath, 'my_app.db');
+      _database = await sqflite.openDatabase(
+        path,
         version: 1,
         onCreate: _onCreate,
         onOpen: (db) async {
           await _seedIfNeeded(db);
         },
-      ),
-    );
+      );
+    } else {
+      sqfliteFfiInit();
+      final factory = databaseFactoryFfi;
+      final dbPath = await factory.getDatabasesPath();
+      final path = join(dbPath, 'my_app.db');
+
+      _database = await factory.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: _onCreate,
+          onOpen: (db) async {
+            await _seedIfNeeded(db);
+          },
+        ),
+      );
+    }
 
     return _database!;
   }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/product.dart';
 import '../../providers/cart_provider.dart';
+import '../../widgets/product_image_view.dart';
 
 class UserDetailScreen extends StatefulWidget {
   static const routeName = '/user/detail';
@@ -32,8 +33,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(18),
-                child: Image.network(
-                  product.imageUrl,
+                child: ProductImageView(
+                  source: product.imageUrl,
                   height: 270,
                   width: double.infinity,
                   fit: BoxFit.cover,

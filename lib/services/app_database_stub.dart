@@ -92,6 +92,14 @@ class AppDatabase {
     _users.add(user);
   }
 
+  Future<void> updateUser(AppUser user) async {
+    await init();
+    final index = _users.indexWhere((u) => u.id == user.id);
+    if (index >= 0) {
+      _users[index] = user;
+    }
+  }
+
   Future<List<Product>> getProducts() async {
     await init();
     return List.unmodifiable(_products);

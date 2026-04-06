@@ -21,6 +21,15 @@ class _UserCheckoutScreenState extends State<UserCheckoutScreen> {
   final addressCtrl = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    final user = context.read<AuthProvider>().currentUser;
+    nameCtrl.text = user?.name ?? '';
+    phoneCtrl.text = user?.phone ?? '';
+    addressCtrl.text = user?.address ?? '';
+  }
+
+  @override
   void dispose() {
     nameCtrl.dispose();
     phoneCtrl.dispose();

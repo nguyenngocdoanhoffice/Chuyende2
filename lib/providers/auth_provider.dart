@@ -69,4 +69,39 @@ class AuthProvider with ChangeNotifier {
     _currentUser = null;
     notifyListeners();
   }
+
+  Future<String?> updateProfile({
+    required String name,
+    required String email,
+    required String phone,
+    required String address,
+  }) async {
+    final current = _currentUser;
+    if (current == null) return 'Bạn chưa đăng nhập';
+
+    if (name.trim().isEmpty) return 'Tên không được để trống';
+    if (!email.contains('@') || email.length < 5) return 'Email không hợp lệ';
+
+    final normalizedEmail = email.trim().toLowerCase();
+    final emailExists = _users.any(
+      (u) => u.id != current.id && u.email.toLowerCase() == normalizedEmail,
+    );
+    if (emailExists) return 'Email đã tồn tại';
+
+    final updated = current.copyWith(
+      name: name.trim(),
+      email: normalizedEmail,
+      phone: phone.trim(),
+      address: address.trim(),
+    );
+
+    final index = _users.indexWhere((u) => u.id == current.id);
+    if (index >= 0) {
+      _users[index] = updated;
+    }
+    _currentUser = updated;
+    await AppDatabase.instance.updateUser(updated);
+    notifyListeners();
+    return null;
+  }
 }

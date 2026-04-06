@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../models/product.dart';
 import '../../providers/product_provider.dart';
+import '../../services/product_image_service.dart';
+import '../../widgets/product_image_view.dart';
 
 class ProductManagementTab extends StatelessWidget {
   const ProductManagementTab({super.key});
@@ -33,9 +35,16 @@ class ProductManagementTab extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () async {
-                      await context.read<ProductProvider>().deleteProduct(
-                        product.id,
-                      );
+                      try {
+                        await context.read<ProductProvider>().deleteProduct(
+                          product.id,
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Xóa thất bại: $e')),
+                        );
+                      }
                     },
                   ),
                 ],
@@ -57,8 +66,8 @@ class ProductManagementTab extends StatelessWidget {
     final priceCtrl = TextEditingController(
       text: old == null ? '' : old.price.toStringAsFixed(0),
     );
-    final imageCtrl = TextEditingController(text: old?.imageUrl ?? '');
     String category = old?.category ?? 'Điện thoại';
+    String imagePath = old?.imageUrl ?? '';
 
     showDialog(
       context: context,
@@ -83,9 +92,27 @@ class ProductManagementTab extends StatelessWidget {
                     decoration: const InputDecoration(labelText: 'Giá'),
                     keyboardType: TextInputType.number,
                   ),
-                  TextField(
-                    controller: imageCtrl,
-                    decoration: const InputDecoration(labelText: 'Image URL'),
+                  const SizedBox(height: 8),
+                  if (imagePath.isNotEmpty)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: ProductImageView(
+                        source: imagePath,
+                        height: 140,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final selectedImage =
+                          await ProductImageService.pickAndStoreImage();
+                      if (selectedImage == null) return;
+                      setLocalState(() => imagePath = selectedImage);
+                    },
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Chọn ảnh từ thiết bị'),
                   ),
                   DropdownButtonFormField<String>(
                     initialValue: category,
@@ -109,33 +136,43 @@ class ProductManagementTab extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               final price = double.tryParse(priceCtrl.text) ?? 0;
-              if (nameCtrl.text.trim().isEmpty || price <= 0) return;
+              if (nameCtrl.text.trim().isEmpty ||
+                  price <= 0 ||
+                  imagePath.isEmpty) {
+                return;
+              }
 
-              final provider = context.read<ProductProvider>();
-              if (old == null) {
-                await provider.addProduct(
-                  name: nameCtrl.text,
-                  category: category,
-                  description: descCtrl.text,
-                  price: price,
-                  imageUrl: imageCtrl.text.isEmpty
-                      ? 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800'
-                      : imageCtrl.text,
-                );
-              } else {
-                await provider.updateProduct(
-                  old.id,
-                  old.copyWith(
+              try {
+                final provider = context.read<ProductProvider>();
+                if (old == null) {
+                  await provider.addProduct(
                     name: nameCtrl.text,
                     category: category,
                     description: descCtrl.text,
                     price: price,
-                    imageUrl: imageCtrl.text,
-                  ),
-                );
+                    imageUrl: imagePath,
+                  );
+                } else {
+                  await provider.updateProduct(
+                    old.id,
+                    old.copyWith(
+                      name: nameCtrl.text,
+                      category: category,
+                      description: descCtrl.text,
+                      price: price,
+                      imageUrl: imagePath,
+                    ),
+                  );
+                }
+
+                if (!context.mounted) return;
+                Navigator.pop(context);
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Lưu thất bại: $e')));
               }
-              if (!context.mounted) return;
-              Navigator.pop(context);
             },
             child: const Text('Lưu'),
           ),

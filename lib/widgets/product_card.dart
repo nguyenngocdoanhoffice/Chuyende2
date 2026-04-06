@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../screens/user/detail_screen.dart';
+import 'product_image_view.dart';
 
 /// Card used on Home screen to show product info.
 class ProductCard extends StatelessWidget {
@@ -30,13 +31,11 @@ class ProductCard extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(18),
                     ),
-                    child: Image.network(
-                      product.imageUrl,
+                    child: ProductImageView(
+                      source: product.imageUrl,
+                      width: double.infinity,
+                      height: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        color: const Color(0xFFE8EEF3),
-                        child: const Icon(Icons.broken_image),
-                      ),
                     ),
                   ),
                 ),

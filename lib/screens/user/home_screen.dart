@@ -7,6 +7,7 @@ import '../../providers/product_provider.dart';
 import '../../widgets/category_item.dart';
 import '../../widgets/product_card.dart';
 import '../auth/login_screen.dart';
+import 'account_screen.dart';
 import 'cart_screen.dart';
 import 'my_orders_screen.dart';
 
@@ -41,24 +42,95 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     final cart = context.watch<CartProvider>();
 
     return Scaffold(
+      drawer: Drawer(
+        child: SafeArea(
+          child: Column(
+            children: [
+              UserAccountsDrawerHeader(
+                accountName: Text(auth.currentUser?.name ?? 'Khach hang'),
+                accountEmail: Text(auth.currentUser?.email ?? ''),
+                currentAccountPicture: const CircleAvatar(
+                  child: Icon(Icons.person_outline),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.home_outlined),
+                title: const Text('Trang chủ'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    UserHomeScreen.routeName,
+                    (route) => false,
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.account_circle_outlined),
+                title: const Text('Tài khoản'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, UserAccountScreen.routeName);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.receipt_long),
+                title: const Text('Đơn của tôi'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, MyOrdersScreen.routeName);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.shopping_cart_outlined),
+                title: Text('Giỏ hàng (${cart.count})'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, UserCartScreen.routeName);
+                },
+              ),
+              const Spacer(),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Đăng xuất'),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.read<AuthProvider>().logout();
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    LoginScreen.routeName,
+                    (route) => false,
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Xin chào'),
-            Text(
-              auth.currentUser?.name ?? 'User',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-            ),
-          ],
+        title: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              UserHomeScreen.routeName,
+              (route) => false,
+            );
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.storefront_rounded),
+              SizedBox(width: 8),
+              Text(
+                'Mobile Shop',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
         ),
         actions: [
-          IconButton(
-            onPressed: () =>
-                Navigator.pushNamed(context, MyOrdersScreen.routeName),
-            icon: const Icon(Icons.receipt_long),
-            tooltip: 'Đơn của tôi',
-          ),
           IconButton(
             onPressed: () =>
                 Navigator.pushNamed(context, UserCartScreen.routeName),
@@ -82,17 +154,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   ),
               ],
             ),
-          ),
-          IconButton(
-            onPressed: () {
-              context.read<AuthProvider>().logout();
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                LoginScreen.routeName,
-                (route) => false,
-              );
-            },
-            icon: const Icon(Icons.logout),
+            tooltip: 'Giỏ hàng',
           ),
         ],
       ),

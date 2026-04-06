@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/product.dart';
-import '../services/fake_api.dart';
 import '../services/product_api_service.dart';
 
 /// ProductProvider loads products and supports search & filter.
@@ -35,11 +34,7 @@ class ProductProvider with ChangeNotifier {
     _loading = true;
     notifyListeners();
     try {
-      try {
-        _items = await ProductApiService.fetchProducts();
-      } catch (_) {
-        _items = await FakeApi.fetchProducts();
-      }
+      _items = await ProductApiService.fetchProducts();
     } finally {
       _loading = false;
       notifyListeners();
@@ -80,30 +75,22 @@ class ProductProvider with ChangeNotifier {
       imageUrl: imageUrl,
       onSale: onSale,
     );
-    try {
-      final createdProduct = await ProductApiService.createProduct(product);
-      _items.add(createdProduct);
-    } catch (_) {
-      _items.add(product);
-    }
+    final createdProduct = await ProductApiService.createProduct(product);
+    _items.add(createdProduct);
     notifyListeners();
   }
 
   Future<void> updateProduct(String id, Product newProduct) async {
     final index = _items.indexWhere((p) => p.id == id);
     if (index == -1) return;
+    await ProductApiService.updateProduct(newProduct);
     _items[index] = newProduct;
-    try {
-      await ProductApiService.updateProduct(newProduct);
-    } catch (_) {}
     notifyListeners();
   }
 
   Future<void> deleteProduct(String id) async {
+    await ProductApiService.deleteProduct(id);
     _items.removeWhere((p) => p.id == id);
-    try {
-      await ProductApiService.deleteProduct(id);
-    } catch (_) {}
     notifyListeners();
   }
 }
