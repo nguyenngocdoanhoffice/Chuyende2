@@ -36,17 +36,15 @@ class ProductImageView extends StatelessWidget {
     }
 
     final file = File(source);
-    if (file.existsSync()) {
-      return Image.file(
-        file,
-        width: width,
-        height: height,
-        fit: fit,
-        errorBuilder: (_, _, _) => _placeholder(),
-      );
-    }
-
-    return _placeholder();
+    // Avoid synchronous file existence check (can block UI). Let Image.file
+    // handle loading and errors asynchronously.
+    return Image.file(
+      file,
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: (_, __, ___) => _placeholder(),
+    );
   }
 
   Widget _placeholder() {
