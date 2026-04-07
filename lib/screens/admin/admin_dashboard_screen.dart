@@ -8,6 +8,7 @@ import 'dashboard_overview_tab.dart';
 import 'order_management_tab.dart';
 import 'product_management_tab.dart';
 import 'report_tab.dart';
+import 'account_management_tab.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   static const routeName = '/admin';
@@ -17,7 +18,7 @@ class AdminDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 5,
+      length: 6,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Admin Dashboard'),
@@ -42,6 +43,7 @@ class AdminDashboardScreen extends StatelessWidget {
               Tab(text: 'Đơn hàng'),
               Tab(text: 'Coupon'),
               Tab(text: 'Báo cáo'),
+              Tab(text: 'Tài khoản'),
             ],
           ),
         ),
@@ -52,6 +54,7 @@ class AdminDashboardScreen extends StatelessWidget {
             OrderManagementTab(),
             CouponManagementTab(),
             ReportTab(),
+            AccountManagementTab(),
           ],
         ),
       ),

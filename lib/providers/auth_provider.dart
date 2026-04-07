@@ -133,4 +133,39 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
     return null;
   }
+
+  List<AppUser> get users => List.unmodifiable(_users);
+
+  Future<String?> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _ensureReady();
+    final current = _currentUser;
+    if (current == null) return 'Bạn chưa đăng nhập';
+
+    if (current.password != currentPassword)
+      return 'Mật khẩu hiện tại không đúng';
+    if (newPassword.length < 6) return 'Mật khẩu mới phải ít nhất 6 ký tự';
+
+    final updated = current.copyWith(password: newPassword);
+    final index = _users.indexWhere((u) => u.id == current.id);
+    if (index >= 0) _users[index] = updated;
+    _currentUser = updated;
+    await AppDatabase.instance.updateUser(updated);
+    notifyListeners();
+    return null;
+  }
+
+  Future<String?> setRole(String userId, UserRole role) async {
+    await _ensureReady();
+    final index = _users.indexWhere((u) => u.id == userId);
+    if (index < 0) return 'Người dùng không tồn tại';
+    final updated = _users[index].copyWith(role: role);
+    _users[index] = updated;
+    if (_currentUser?.id == userId) _currentUser = updated;
+    await AppDatabase.instance.updateUser(updated);
+    notifyListeners();
+    return null;
+  }
 }

@@ -3,6 +3,11 @@ import 'package:provider/provider.dart';
 
 import '../providers/product_provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
+import 'auth/login_screen.dart';
+import 'user/change_password_screen.dart';
+import 'user/account_screen.dart';
+import 'admin/admin_dashboard_screen.dart';
 import '../widgets/product_card.dart';
 import '../widgets/category_item.dart';
 
@@ -61,6 +66,64 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
               ],
             ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.person_outline),
+            onSelected: (v) {
+              final auth = context.read<AuthProvider>();
+              if (v == 'account') {
+                Navigator.pushNamed(context, UserAccountScreen.routeName);
+                return;
+              }
+              if (v == 'change') {
+                Navigator.pushNamed(context, ChangePasswordScreen.routeName);
+                return;
+              }
+              if (v == 'admin') {
+                Navigator.pushNamed(context, AdminDashboardScreen.routeName);
+                return;
+              }
+              if (v == 'logout') {
+                auth.logout();
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  LoginScreen.routeName,
+                  (r) => false,
+                );
+                return;
+              }
+              if (v == 'login') {
+                Navigator.pushNamed(context, LoginScreen.routeName);
+                return;
+              }
+            },
+            itemBuilder: (ctx) {
+              final auth = context.read<AuthProvider>();
+              if (auth.isLoggedIn) {
+                return [
+                  const PopupMenuItem(
+                    value: 'account',
+                    child: Text('Tài khoản'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'change',
+                    child: Text('Đổi mật khẩu'),
+                  ),
+                  if (auth.isAdmin)
+                    const PopupMenuItem(
+                      value: 'admin',
+                      child: Text('Quản trị'),
+                    ),
+                  const PopupMenuItem(
+                    value: 'logout',
+                    child: Text('Đăng xuất'),
+                  ),
+                ];
+              }
+              return [
+                const PopupMenuItem(value: 'login', child: Text('Đăng nhập')),
+              ];
+            },
           ),
         ],
       ),

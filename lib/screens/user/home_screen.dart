@@ -8,6 +8,7 @@ import '../../widgets/category_item.dart';
 import '../../widgets/product_card.dart';
 import '../auth/login_screen.dart';
 import 'account_screen.dart';
+import 'change_password_screen.dart';
 import 'cart_screen.dart';
 import 'my_orders_screen.dart';
 
@@ -71,6 +72,14 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, UserAccountScreen.routeName);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.lock_outline),
+                title: const Text('Đổi mật khẩu'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, ChangePasswordScreen.routeName);
                 },
               ),
               ListTile(

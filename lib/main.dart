@@ -12,6 +12,7 @@ import 'screens/auth/register_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
 import 'screens/user/home_screen.dart';
 import 'screens/user/account_screen.dart';
+import 'screens/user/change_password_screen.dart';
 import 'screens/user/detail_screen.dart';
 import 'screens/user/cart_screen.dart';
 import 'screens/user/checkout_screen.dart';
@@ -92,6 +93,7 @@ class MyApp extends StatelessWidget {
           AdminDashboardScreen.routeName: (_) => const AdminDashboardScreen(),
           UserHomeScreen.routeName: (_) => const UserHomeScreen(),
           UserAccountScreen.routeName: (_) => const UserAccountScreen(),
+          ChangePasswordScreen.routeName: (_) => const ChangePasswordScreen(),
           UserDetailScreen.routeName: (_) => const UserDetailScreen(),
           UserCartScreen.routeName: (_) => const UserCartScreen(),
           UserCheckoutScreen.routeName: (_) => const UserCheckoutScreen(),
